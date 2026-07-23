@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Want a chrome extension so that when i browse twitter — pitch</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #05070d;
+  --fg: #e6f0ff;
+  --accent: #5ad1ff;
+  --muted: #8aa0c0;
+  --line: rgba(90, 209, 255, 0.18);
+  --wash: rgba(90, 209, 255, 0.06);
+  --ok: #9dffb0;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 0%, #0b1426, var(--bg) 70%);
+  color: var(--fg);
+  font: 18px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  cursor: pointer;
+  user-select: none;
+}
+.slide {
+  position: fixed;
+  inset: 0 0 4rem 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4vh 7vw;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity 220ms ease, transform 220ms ease, visibility 220ms;
+}
+.slide.active { opacity: 1; visibility: visible; transform: none; }
+.kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: clamp(0.8rem, 1.4vw, 1.1rem);
+  color: var(--accent);
+  margin: 0 0 0.8rem;
+}
+.headline {
+  font-size: clamp(2rem, 5.2vw, 4.2rem);
+  line-height: 1.08;
+  margin: 0 0 1.4rem;
+  max-width: 22ch;
+}
+.quote {
+  font-size: clamp(1.3rem, 2.8vw, 2.2rem);
+  line-height: 1.35;
+  color: var(--fg);
+  border-left: 4px solid var(--accent);
+  background: var(--wash);
+  border-radius: 0 14px 14px 0;
+  margin: 0 0 1.4rem;
+  padding: 1.2rem 1.6rem;
+  max-width: 42ch;
+}
+.hero .headline { font-size: clamp(1.4rem, 2.6vw, 2rem); color: var(--muted); }
+.hero .quote {
+  font-size: clamp(2.2rem, 5.4vw, 4.4rem);
+  line-height: 1.18;
+  border-left-width: 6px;
+  max-width: 30ch;
+}
+.para {
+  font-size: clamp(1.1rem, 2.2vw, 1.7rem);
+  color: var(--fg);
+  margin: 0 0 1rem;
+  max-width: 52ch;
+}
+.points {
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+  max-width: 56ch;
+}
+.points li {
+  font-size: clamp(1.05rem, 2vw, 1.6rem);
+  margin: 0 0 0.85rem;
+  padding-left: 1.5em;
+  position: relative;
+}
+.points li::before {
+  content: "\2192";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+.mocks { display: flex; flex-direction: column; gap: 0.9rem; min-height: 0; }
+.mock-tabs { display: flex; gap: 0.9rem; flex-wrap: wrap; }
+.mock-tab {
+  font: inherit;
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
+  padding: 0.9rem 1.9rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--wash);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+.mock-tab:hover, .mock-tab[data-dwell-hot] { border-color: var(--accent); color: var(--fg); }
+.mock-tab.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.mock-panels { position: relative; height: 52vh; }
+.mock-panel {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.mock-panel.active { display: flex; }
+.mock-frame {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #0b1426;
+}
+.mock-missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  background: var(--wash);
+}
+.mock-caption {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+}
+.decisions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.4rem;
+  margin-top: 0.6rem;
+}
+.decision {
+  font: inherit;
+  min-height: 22vh;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.8rem;
+  text-align: left;
+  color: var(--fg);
+  background: var(--wash);
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+.decision:hover, .decision[data-dwell-hot] {
+  border-color: var(--accent);
+  background: rgba(90, 209, 255, 0.12);
+  transform: translateY(-2px);
+}
+.decision:disabled { opacity: 0.45; cursor: default; transform: none; }
+.decision.chosen { opacity: 1; border-color: var(--ok); background: rgba(157, 255, 176, 0.1); }
+.decision-label { font-size: clamp(1.5rem, 2.8vw, 2.4rem); font-weight: 650; }
+.decision-detail { color: var(--muted); font-size: clamp(0.95rem, 1.6vw, 1.25rem); }
+.decision-form {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 1.2rem;
+}
+.decision-form[hidden] { display: none; }
+.decision-hint { flex-basis: 100%; margin: 0; color: var(--accent); }
+.decision-input {
+  flex: 1;
+  min-width: 260px;
+  font: inherit;
+  font-size: 1.1rem;
+  padding: 0.9rem 1.1rem;
+  color: var(--fg);
+  background: rgba(5, 7, 13, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: text;
+  user-select: text;
+}
+.decision-send {
+  font: inherit;
+  font-size: 1.05rem;
+  padding: 0.9rem 1.7rem;
+  color: var(--bg);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.decision-status {
+  min-height: 1.6em;
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.8vw, 1.3rem);
+}
+.decision-status.ok { color: var(--ok); }
+.take-home-row { display: flex; align-items: center; gap: 3rem; flex-wrap: wrap; }
+.take-home-qr {
+  flex: 0 0 auto;
+  width: clamp(220px, 34vh, 360px);
+  padding: 1.1rem;
+  background: #fff;
+  border-radius: 18px;
+}
+.take-home-qr svg { display: block; width: 100%; height: auto; }
+.take-home-copy { flex: 1 1 320px; }
+.take-home-url a { color: var(--accent); word-break: break-all; }
+.deckbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 2rem;
+  border-top: 1px solid var(--line);
+  background: rgba(5, 7, 13, 0.85);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.deckbar .dots { display: flex; gap: 0.55rem; }
+.dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+.dot.active { background: var(--accent); }
+.counter { color: var(--accent); min-width: 4ch; text-align: right; }
+    </style>
+  </head>
+  <body>
+    <section class="slide hero active" data-slide aria-label="Slide 1 of 4">
+      <p class="kicker">Heard in the room</p>
+      <h1 class="headline">The idea, verbatim</h1>
+      <blockquote class="quote">“want a chrome extension so that when i browse twitter i can click a”</blockquote>
+      <ul class="points">
+        <li>Callsign “twitter” — process upid-2</li>
+      </ul>
+    </section>
+    <section class="slide" data-slide aria-label="Slide 2 of 4">
+      <p class="kicker">The concept</p>
+      <h1 class="headline">Want a chrome extension so that when i browse twitter</h1>
+      <p class="para">Click any tweet, keep the good part.</p>
+      <ul class="points">
+        <li>Concept first: each framework sketched the idea as a clickable mock, not a promise.</li>
+        <li>Say &quot;steer twitter ...&quot; out loud (or use the Steer it button) to reshape it before committing.</li>
+        <li>Commission it and the full build spins up — the wall shows it happen live.</li>
+        <li>Parked ideas keep their seed in the tray; nothing said in the room is lost.</li>
+      </ul>
+    </section>
+    <section class="slide" data-slide aria-label="Slide 3 of 4">
+      <p class="kicker">The mocks</p>
+      <h1 class="headline">One concept mock, live</h1>
+      <div class="mocks" data-mocks>
+        <div class="mock-panels">
+          <div class="mock-panel active" data-mock-panel="smithers"><iframe class="mock-frame" src="./mocks/smithers/index.html" title="smithers concept mock" loading="lazy"></iframe><p class="mock-caption">smithers · framework concept mock</p></div>
+        </div>
+      </div>
+    </section>
+    <section class="slide" data-slide aria-label="Slide 4 of 4">
+      <p class="kicker">Your call</p>
+      <h1 class="headline">How should we continue?</h1>
+      <div class="take-home-note" data-take-home-note><p class="para">This deck is a take-home — the room is where you decide.</p><p class="para">Back in the room, this idea can be commissioned into a real build, steered with a spoken correction, or parked for later. The idea, its concept, and the mock gallery above travel with this page.</p></div>
+    </section>
+    <footer class="deckbar">
+      <span class="foot" data-testid="slideshow-footer">upid-2 · smithers · twitter</span>
+      <span class="dots">
+        <button class="dot active" data-dot type="button" aria-label="Go to slide 1"></button>
+        <button class="dot" data-dot type="button" aria-label="Go to slide 2"></button>
+        <button class="dot" data-dot type="button" aria-label="Go to slide 3"></button>
+        <button class="dot" data-dot type="button" aria-label="Go to slide 4"></button>
+      </span>
+      <span class="counter" data-counter>1 / 4</span>
+    </footer>
+    <script>
+(function () {
+  "use strict";
+  var slides = Array.prototype.slice.call(document.querySelectorAll("[data-slide]"));
+  var dots = Array.prototype.slice.call(document.querySelectorAll("[data-dot]"));
+  var counter = document.querySelector("[data-counter]");
+  var statusEl = document.querySelector("[data-decision-status]");
+  var index = 0;
+  var fromHash = parseInt((location.hash || "").replace("#", ""), 10);
+  if (!isNaN(fromHash) && fromHash >= 1 && fromHash <= slides.length) {
+    index = fromHash - 1;
+  }
+  function show(next) {
+    if (slides.length === 0) {
+      return;
+    }
+    index = Math.max(0, Math.min(slides.length - 1, next));
+    for (var i = 0; i < slides.length; i++) {
+      slides[i].classList.toggle("active", i === index);
+    }
+    for (var j = 0; j < dots.length; j++) {
+      dots[j].classList.toggle("active", j === index);
+    }
+    if (counter) {
+      counter.textContent = (index + 1) + " / " + slides.length;
+    }
+    if (history.replaceState) {
+      history.replaceState(null, "", "#" + (index + 1));
+    }
+  }
+  function closest(node, test) {
+    while (node && node !== document.body) {
+      if (test(node)) {
+        return node;
+      }
+      node = node.parentElement;
+    }
+    return null;
+  }
+  var INTERACTIVE = { A: 1, BUTTON: 1, INPUT: 1, TEXTAREA: 1, SELECT: 1, LABEL: 1, FORM: 1, IFRAME: 1 };
+  document.addEventListener("keydown", function (event) {
+    var tag = event.target && event.target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
+      return;
+    }
+    if (event.key === "ArrowRight" || event.key === " " || event.key === "PageDown" || event.key === "Enter") {
+      event.preventDefault();
+      show(index + 1);
+    } else if (event.key === "ArrowLeft" || event.key === "PageUp" || event.key === "Backspace") {
+      event.preventDefault();
+      show(index - 1);
+    } else if (event.key === "Home") {
+      show(0);
+    } else if (event.key === "End") {
+      show(slides.length - 1);
+    }
+  });
+  function setStatus(text, ok) {
+    if (statusEl) {
+      statusEl.textContent = text;
+      statusEl.classList.toggle("ok", !!ok);
+    }
+  }
+  function send(endpoint, body, confirmation, terminalButton) {
+    setStatus("Sending…", false);
+    fetch(endpoint, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body || {})
+    }).then(function (response) {
+      if (response.ok) {
+        setStatus(confirmation, true);
+        if (terminalButton) {
+          var all = document.querySelectorAll("[data-decision]");
+          for (var i = 0; i < all.length; i++) {
+            all[i].disabled = true;
+            all[i].classList.toggle("chosen", all[i] === terminalButton);
+          }
+        }
+      } else {
+        setStatus("The room said no (HTTP " + response.status + ") — try again.", false);
+      }
+    }, function () {
+      setStatus("Could not reach the room — is the server running?", false);
+    });
+  }
+  document.addEventListener("click", function (event) {
+    var tab = closest(event.target, function (node) {
+      return node.hasAttribute && node.hasAttribute("data-mock-tab");
+    });
+    if (tab) {
+      var mockId = tab.getAttribute("data-mock-tab");
+      var root = closest(tab, function (node) {
+        return node.hasAttribute && node.hasAttribute("data-mocks");
+      });
+      if (root) {
+        var tabs = root.querySelectorAll("[data-mock-tab]");
+        for (var t = 0; t < tabs.length; t++) {
+          tabs[t].classList.toggle("active", tabs[t] === tab);
+        }
+        var panels = root.querySelectorAll("[data-mock-panel]");
+        for (var p = 0; p < panels.length; p++) {
+          panels[p].classList.toggle("active", panels[p].getAttribute("data-mock-panel") === mockId);
+        }
+      }
+      return;
+    }
+    var decision = closest(event.target, function (node) {
+      return node.hasAttribute && node.hasAttribute("data-decision");
+    });
+    if (decision && !decision.disabled) {
+      if (decision.getAttribute("data-prompt") === "1") {
+        var form = document.querySelector('[data-decision-form="' + decision.getAttribute("data-decision") + '"]');
+        if (form) {
+          form.hidden = !form.hidden;
+          if (!form.hidden) {
+            var promptInput = form.querySelector("[data-decision-input]");
+            if (promptInput) {
+              promptInput.focus();
+            }
+          }
+        }
+      } else {
+        send(
+          decision.getAttribute("data-endpoint"),
+          {},
+          decision.getAttribute("data-confirmation"),
+          decision.getAttribute("data-terminal") === "1" ? decision : null
+        );
+      }
+      return;
+    }
+    if (closest(event.target, function (node) { return INTERACTIVE[node.tagName] === 1; })) {
+      return;
+    }
+    if (event.clientX < window.innerWidth * 0.3) {
+      show(index - 1);
+    } else {
+      show(index + 1);
+    }
+  });
+  document.addEventListener("submit", function (event) {
+    var form = event.target;
+    if (!form.hasAttribute || !form.hasAttribute("data-decision-form")) {
+      return;
+    }
+    event.preventDefault();
+    var input = form.querySelector("[data-decision-input]");
+    var text = input ? input.value.trim() : "";
+    if (text.length === 0) {
+      setStatus("Type a correction first — or just say it out loud.", false);
+      return;
+    }
+    var body = {};
+    body[form.getAttribute("data-field") || "text"] = text;
+    send(form.getAttribute("data-endpoint"), body, form.getAttribute("data-confirmation"), null);
+    form.hidden = true;
+    if (input) {
+      input.value = "";
+    }
+  });
+  for (var d = 0; d < dots.length; d++) {
+    (function (i) {
+      dots[i].addEventListener("click", function () {
+        show(i);
+      });
+    })(d);
+  }
+  show(index);
+})();
+    </script>
+  </body>
+</html>
