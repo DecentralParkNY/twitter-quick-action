@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Clipbird — clip any tweet</title>
+<style>
+  :root{
+    --ink:#0b1120;
+    --paper:#f4f1ea;
+    --card:#ffffff;
+    --sky:#1d9bf0;
+    --amber:#ffbf47;
+    --grape:#7c5cff;
+    --line:rgba(11,17,32,.12);
+    --muted:#5b6472;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Helvetica,Arial,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(124,92,255,.18), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(29,155,240,.18), transparent 55%),
+      var(--paper);
+    color:var(--ink);
+    min-height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 20px;
+  }
+  .stage{width:100%;max-width:1080px}
+
+  /* Brand row */
+  .brand{
+    display:flex;align-items:center;gap:12px;margin-bottom:18px;
+  }
+  .logo{
+    width:42px;height:42px;border-radius:13px;
+    background:linear-gradient(135deg,var(--sky),var(--grape));
+    display:grid;place-items:center;color:#fff;font-size:22px;
+    box-shadow:0 8px 22px rgba(29,155,240,.35);
+    transform:rotate(-6deg);
+  }
+  .brand h1{font-size:20px;margin:0;letter-spacing:-.02em}
+  .brand .pill{
+    margin-left:auto;font-size:12px;font-weight:700;letter-spacing:.04em;
+    color:var(--grape);background:rgba(124,92,255,.12);
+    padding:7px 12px;border-radius:999px;text-transform:uppercase;
+  }
+
+  /* Headline pitch */
+  .pitch{
+    font-size:clamp(30px,5.2vw,52px);
+    line-height:1.04;letter-spacing:-.03em;font-weight:800;
+    margin:6px 0 6px;max-width:16ch;
+  }
+  .pitch em{font-style:normal;
+    background:linear-gradient(120deg,var(--sky),var(--grape));
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--muted);font-size:17px;max-width:52ch;margin:0 0 26px}
+
+  .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:26px;align-items:start}
+  @media (max-width:820px){.grid{grid-template-columns:1fr}}
+
+  /* Hero: the tweet + the clip button */
+  .browser{
+    background:var(--card);border-radius:20px;border:1px solid var(--line);
+    box-shadow:0 30px 60px -30px rgba(11,17,32,.4);overflow:hidden;
+  }
+  .chrome{
+    display:flex;align-items:center;gap:8px;padding:12px 16px;
+    background:#eceef3;border-bottom:1px solid var(--line);
+  }
+  .dot{width:11px;height:11px;border-radius:50%}
+  .dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+  .url{
+    margin-left:10px;font-size:12px;color:var(--muted);background:#fff;
+    padding:6px 12px;border-radius:8px;flex:1;border:1px solid var(--line);
+  }
+  .ext{
+    width:24px;height:24px;border-radius:7px;
+    background:linear-gradient(135deg,var(--sky),var(--grape));
+    display:grid;place-items:center;color:#fff;font-size:13px;
+  }
+
+  .tweet{padding:20px 22px;position:relative}
+  .row{display:flex;gap:12px}
+  .av{width:46px;height:46px;border-radius:50%;
+    background:linear-gradient(135deg,#ffd36e,#ff7eb3);flex:none}
+  .name{font-weight:700}
+  .handle{color:var(--muted);font-size:14px}
+  .body{margin:10px 0 14px;font-size:16px;line-height:1.5}
+  .body b{color:var(--grape)}
+  .actions{display:flex;gap:26px;color:var(--muted);font-size:13px}
+  .actions span{display:flex;align-items:center;gap:6px}
+
+  .clipbtn{
+    position:absolute;right:18px;top:18px;
+    display:flex;align-items:center;gap:8px;cursor:pointer;
+    border:none;font:inherit;font-weight:700;font-size:14px;color:#fff;
+    padding:10px 16px;border-radius:12px;
+    background:linear-gradient(135deg,var(--sky),var(--grape));
+    box-shadow:0 12px 24px -8px rgba(124,92,255,.7);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .clipbtn:hover{transform:translateY(-1px)}
+  .clipbtn:active{transform:scale(.96)}
+  .clipbtn.saved{background:linear-gradient(135deg,#1cc98a,#12a56f)}
+
+  .hint{font-size:12px;color:var(--muted);margin:12px 22px 20px;
+    display:flex;align-items:center;gap:7px}
+  .kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;
+    padding:2px 7px;font-size:11px;font-weight:700;background:#f6f7fa}
+
+  /* Collection board */
+  .board{
+    background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.55));
+    border:1px solid var(--line);border-radius:20px;padding:20px;
+    backdrop-filter:blur(6px);
+  }
+  .board h3{margin:0 0 4px;font-size:15px;letter-spacing:-.01em}
+  .board .count{color:var(--muted);font-size:13px;margin-bottom:14px}
+  .clips{display:flex;flex-direction:column;gap:12px}
+  .clip{
+    background:#fff;border:1px solid var(--line);border-left:4px solid var(--sky);
+    border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.4;
+    animation:pop .35s cubic-bezier(.2,.9,.3,1.4);
+  }
+  .clip .tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--grape);background:rgba(124,92,255,.1);
+    padding:3px 8px;border-radius:999px;margin-bottom:7px}
+  .clip .who{color:var(--muted);font-size:11px;margin-top:6px}
+  .clip:nth-child(2){border-left-color:var(--amber)}
+  .clip:nth-child(3){border-left-color:var(--grape)}
+  @keyframes pop{from{opacity:0;transform:translateY(-8px) scale(.97)}
+    to{opacity:1;transform:none}}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:26px 0;
+    border:1.5px dashed var(--line);border-radius:12px}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="brand">
+      <div class="logo">✂️</div>
+      <h1>Clipbird</h1>
+      <span class="pill">Chrome Extension · concept</span>
+    </div>
+
+    <p class="pitch">Click any tweet, <em>keep the good part.</em></p>
+    <p class="sub">Clipbird lives on your Twitter timeline. One click clips a tweet into
+      a beautiful, searchable board — auto-tagged and yours forever, no bookmark graveyard.</p>
+
+    <div class="grid">
+      <!-- HERO: fake browser with a tweet + clip button -->
+      <div class="browser">
+        <div class="chrome">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="url">x.com/home</span>
+          <span class="ext">✂️</span>
+        </div>
+        <div class="tweet">
+          <button id="clip" class="clipbtn" onclick="clipIt()">✂️ Clip</button>
+          <div class="row">
+            <div class="av"></div>
+            <div>
+              <div class="name">Dana Okonkwo</div>
+              <div class="handle">@danabuilds</div>
+            </div>
+          </div>
+          <div class="body">The best productivity system is the one you actually reopen.
+            Everything else is <b>#procrastination</b> with extra steps.</div>
+          <div class="actions">
+            <span>💬 214</span><span>🔁 1.9K</span><span>❤️ 12.4K</span><span>📊 880K</span>
+          </div>
+        </div>
+        <div class="hint">Or press <span class="kbd">C</span> while hovering any tweet</div>
+      </div>
+
+      <!-- Collection board -->
+      <div class="board">
+        <h3>Your board · Ideas</h3>
+        <div class="count" id="count">0 clips saved</div>
+        <div class="clips" id="clips">
+          <div class="empty" id="empty">Nothing clipped yet — hit ✂️ Clip →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let n = 0;
+  function clipIt(){
+    const btn = document.getElementById('clip');
+    const empty = document.getElementById('empty');
+    if(empty) empty.remove();
+
+    const clip = document.createElement('div');
+    clip.className = 'clip';
+    clip.innerHTML =
+      '<span class="tag">auto: mindset</span>' +
+      'The best productivity system is the one you actually reopen…' +
+      '<div class="who">@danabuilds · clipped just now</div>';
+    const list = document.getElementById('clips');
+    list.insertBefore(clip, list.firstChild);
+
+    n++;
+    document.getElementById('count').textContent =
+      n + (n === 1 ? ' clip saved' : ' clips saved');
+
+    btn.textContent = '✓ Clipped';
+    btn.classList.add('saved');
+    setTimeout(()=>{ btn.textContent = '✂️ Clip'; btn.classList.remove('saved'); }, 1400);
+  }
+  addEventListener('keydown', e => { if(e.key.toLowerCase() === 'c') clipIt(); });
+</script>
+</body>
+</html>
